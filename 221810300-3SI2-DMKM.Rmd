@@ -1,0 +1,176 @@
+---
+title: "DMKM"
+author: "Faturrokhman-221810300-3SI2"
+date: "10/27/2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Nama : Faturrokhman
+NIM : 221810300
+No Absen : 13
+Kelas : 3SI2
+Dosen : Ibnu Santoso, SST, M.T.
+Mata Kuliah : Data Mining and Knowledge Management
+Hari/Tanggal Ujian : Selasa, 27 Oktober 2020
+
+"Saya menyatakan bahwa ujian ini saya kerjakan dengan jujur sesuai kemampuan sendiri dan tidak mengutip sebagian atau seluruh pekerjaan orang lain. Jika suatu saat ditemukan saya melanggar ketentuan ujian, saya siap menerima konsekuensi yang berlaku."
+
+ttd.
+Faturrokhman
+
+```{r}
+library(naivebayes)
+library(psych)
+library(caret)
+library(dplyr)
+library(naniar)
+library(ggplot2)
+library(ROCR)
+library(e1071)
+library(randomForest)
+```
+
+
+## Load Data
+```{r}
+setwd("C:/Fatur/POLSTAT STIS/Semester 5/DMKM/UTS")
+crx <- read.csv("crx.data", header=FALSE)
+colnames(crx) <- c("A1","A2","A3","A4","A5","A6","A7","A8"
+                   ,"A9","A10","A11","A12","A13","A14","A15","A16")
+head(crx)
+str(crx)
+```
+
+
+# Mengecek Missing value
+```{r}
+#Ubah nilai '?' menjadi NA
+crx <- na_if(x = crx, y = '?')
+colSums(is.na(crx))
+```
+
+
+```{r}
+vis_miss(crx)
+```
+
+```{r}
+crx <- na.omit(crx)
+str(crx)
+```
+```{r}
+crx[, c(1,4,5,6,7,9,10,12,13,16)] <- lapply(crx[, c(1,4,5,6,7,9,10,12,13,16)], as.factor)
+crx[, c(11,14,15)] <- lapply(crx[, c(11,14,15)], as.numeric)
+
+str(crx)
+```
+
+
+# Statistik Deskriptif
+```{r}
+summary(crx)
+```
+
+```{r}
+ggplot(data = crx, aes(x=A16, fill=A16)) + geom_bar()
+```
+
+Par plot
+```{r}
+pairs.panels(crx)
+```
+
+
+## Modelling
+#Split Data
+```{r}
+set.seed(1234)
+sampel <- sample(2, nrow(crx), replace = T, prob = c(0.8,0.2))
+trainingdat <- crx[sampel==1, ]
+testingdat <- crx[sampel==2, ]
+print(paste("Jumlah Train Data: ", nrow(trainingdat), "| Jumlah Test Data: ", nrow(testingdat)))
+```
+
+#Membuat Model
+##MOdel 1
+```{r}
+#Model pertama
+modelnaiv <- naive_bayes(A16~.,data=trainingdat, laplace = TRUE)
+summary(modelnaiv)
+#prediksi <- predict(modelnaiv, newdata = testingdat) #error disini, entah kenapa
+
+## Confussion Matrix
+#confusionMatrix(table(prediksi,testingdat$A16))
+```
+
+Model Pertama ternyata error, kita lanjut ke model kedua saja dan lupakan model pertama.
+
+#Model 2
+```{r}
+## Model kedua
+modelnaiv2 <- naiveBayes(A16~., data = trainingdat)
+modelnaiv2
+
+```
+
+```{r}
+# prediksi
+pred_nbt <- predict(modelnaiv2, newdata = trainingdat)
+# Confussion Matrix
+confusionMatrix(pred_nbt, trainingdat$A16)
+```
+
+
+
+```{r}
+# prediksi
+pred_nb <- predict(modelnaiv2, newdata = testingdat)
+# Confussion Matrix
+confusionMatrix(pred_nb, testingdat$A16)
+```
+
+##Ukuran Akurasi Model 2 pada Testing Data
+
+Precision :
+```{r}
+precision <- 41/(41+9)
+precision
+```
+Recall :
+```{r}
+recall <- 41/(41+22)
+recall
+```
+F1 Score
+```{r}
+(2*precision*recall)/(precision+recall)
+```
+
+
+```{r}
+
+rf <- randomForest(A16~., data = trainingdat)
+print(rf)
+# prediksi dan validasi dengan split validation
+pred_rf <- predict(rf, newdata = trainingdat)
+confusionMatrix(pred_rf %>% as.factor(), trainingdat$A16 %>% as.factor())
+```
+##Membandingkan dua model
+
+
+
+
+
+
+
+
+
+
+
+
+
+
